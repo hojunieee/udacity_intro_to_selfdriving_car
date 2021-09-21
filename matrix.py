@@ -77,7 +77,7 @@ class Matrix(object):
             raise(ValueError, "Cannot calculate the trace of a non-square matrix.")
             
         sum=0
-        for i in range(len(self)):
+        for i in range(self.h):
             sum+=self[i][i]
         return sum
 
@@ -91,7 +91,7 @@ class Matrix(object):
         if self.h > 2:
             raise(NotImplementedError, "inversion not implemented for matrices larger than 2x2.")
         if self.h == 1:
-            return [[(1/self[0][0])]]
+            return Matrix([[(1/self[0][0])]])
         elif self.h == 2:
             a = self[0][0]
             b = self[0][1]
