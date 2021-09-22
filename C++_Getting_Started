@@ -1,17 +1,17 @@
+
 #include <iostream>
 
-int main ()
-{
+//TODO: declare your function called distance
+float distance (float velocity, float acceleration, float time_elapsed);
 
-	int x = 25;
-	float y = 61.4;
-	float z = 199.2;
+// Leave the main function as is
+int main() {
+    std::cout << distance(3, 4, 5) << std::endl;  
+    std::cout << distance(7.0, 2.1, 5.4) << std::endl;
+    return 0;   
+}
 
-	float division = y / z;
-
-	std::cout << x << '\n';
-	std::cout << y << '\n';
-	std::cout << division << '\n';
-	
-	return 0;
+//TODO: define your function called distance
+float distance (float velocity, float acceleration, float time_elapsed){
+    return velocity*time_elapsed + 0.5*acceleration*time_elapsed*time_elapsed;
 }
