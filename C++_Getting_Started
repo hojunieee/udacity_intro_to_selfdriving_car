@@ -1,11 +1,12 @@
 #include <iostream>
 #include <vector>
+using namespace std;
 
 int main() {
 
-    std::vector<int> vector1;
-    std::vector<int> vector2;
-    std::vector<int> vector3;
+    vector<int> vector1;
+    vector<int> vector2;
+    vector<int> vector3;
     
     //TODO: Use this as a playground to write a for loop and if statements
     // in the same program.
@@ -14,16 +15,16 @@ int main() {
     
     for (i=0;i<=80;i=i+iterator){
         if (0<= iterator && iterator<10){
-            std::cout << "slow";
+            cout << "slow";
         }
         else if (10<= iterator && iterator<30){
-            std::cout << "medium";
+            cout << "medium";
         }
         else if (30<= iterator && iterator<70){
-            std::cout << "fast";
+            cout << "fast";
         }
         else if (70<= iterator){
-            std::cout << "too fast";
+            cout << "too fast";
         }
     }
     // For example, write a for loop that iterates from 0 to 80.
