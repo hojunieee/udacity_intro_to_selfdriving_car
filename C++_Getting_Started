@@ -1,39 +1,47 @@
+//TODO: Write a function that receives two integer matrices and outputs
+// the sum of the two matrices. Then in your main() function, input a few
+// examples to check your solution. Output the results of your function to 
+// cout. You could even write a separate function that prints an arbitrarily 
+// sized matric to cout.
+
 #include <iostream>
 #include <vector>
 using namespace std;
+typedef vector < vector <float> > matrix;
 
-int main() {
+matrix sumM(matrix M1, matrix M2);
+void matrixprint(matrix inputmatrix);
 
-    vector<int> vector1;
-    vector<int> vector2;
-    vector<int> vector3;
-    
-    //TODO: Use this as a playground to write a for loop and if statements
-    // in the same program.
-    int i = 0;
-    int iterator=70;
-    
-    for (i=0;i<=80;i=i+iterator){
-        if (0<= iterator && iterator<10){
-            cout << "slow";
-        }
-        else if (10<= iterator && iterator<30){
-            cout << "medium";
-        }
-        else if (30<= iterator && iterator<70){
-            cout << "fast";
-        }
-        else if (70<= iterator){
-            cout << "too fast";
+int main(){
+    matrix matrix1 (5, vector <float> (3, 2));
+	matrix matrix2 (5, vector <float> (3, 26));
+	
+	matrix result = sumM(matrix1,matrix2);
+	matrixprint(result);
+	return 0;
+}
+
+
+
+matrix sumM(matrix M1, matrix M2){
+    matrix resultM (M1.size(),M1[0]);
+
+    for (int row=0;row<M1.size();row++){
+        for (int column=0;column<M1[0].size();column++){
+            resultM[row][column] = M1[row][column] + M2[row][column];
         }
     }
-    // For example, write a for loop that iterates from 0 to 80.
-    // If the iterator is greater than or equal to 0 but less than 10, 
-    //      output the phrase 'slow'
-    // If the iterator is between 10 inclusive
-    //      and less than 30, output the phrase 'medium'
-    // If the iterator is between 30 inclusive and 70, output the phrase 'fast'
-    // If the iterator is greater than 70 inclusive, output the phrase 'too fast'
     
-    return 0;
+    return resultM;
+}
+
+
+
+void matrixprint(matrix inputmatrix) {
+	for (int row = 0; row < inputmatrix.size(); row++) {
+		for (int column = 0; column < inputmatrix[0].size(); column++) {
+			cout << inputmatrix[row][column] << " ";
+		}
+		cout << endl;
+	}
 }
