@@ -7,8 +7,8 @@
 	"sense", and "move" functions.
 */
 
-#include "localizer.h"
-#include "helpers.cpp"
+#include "4_localizer.h"
+#include "4_helpers.cpp"
 #include <stdlib.h>
 using namespace std;
 
