@@ -1,172 +1,251 @@
 /**
-	localizer.cpp
-
-	Purpose: implements a 2-dimensional histogram filter
-	for a robot living on a colored cyclical grid by 
-	correctly implementing the "initialize_beliefs", 
-	"sense", and "move" functions.
+	helpers.cpp
+	Purpose: helper functions which are useful when
+	implementing a 2-dimensional histogram filter.
 */
 
-#include "4_localizer.h"
-#include "4_helpers.cpp"
-#include <stdlib.h>
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <fstream>
+#include "helpers.h"
+#include "debugging_helpers.cpp"
+
 using namespace std;
 
 /**
-	TODO - implement this function 
-    
-    Initializes a grid of beliefs to a uniform distribution. 
+	TODO - implement this function
 
-    @param grid - a two dimensional grid map (vector of vectors 
-    	   of chars) representing the robot's world. For example:
-    	   
-    	   g g g
-    	   g r g
-    	   g g g
-		   
-		   would be a 3x3 world where every cell is green except 
-		   for the center, which is red.
+    Normalizes a grid of numbers. 
 
-    @return - a normalized two dimensional grid of floats. For 
-           a 2x2 grid, for example, this would be:
+    @param grid - a two dimensional grid (vector of vectors of floats)
+		   where each entry represents the unnormalized probability 
+		   associated with that grid cell.
 
-           0.25 0.25
-           0.25 0.25
+    @return - a new normalized two dimensional grid where the sum of 
+    	   all probabilities is equal to one.
 */
-vector< vector <float> > initialize_beliefs(vector< vector <char> > grid) {
-	vector< vector <float> > newGrid;
-	int height = grid.size();
-	int width = grid[0].size();
-	int area = height * width;
-	float belief_per_cell = 1.0 / area;
-	vector <float> new_row(3,0);
-
+vector< vector<float> > normalize(vector< vector <float> > grid) {
+	
+	vector< vector<float> > newGrid;
+	vector <float> new_row;
+  
+	float sum =0;
 	for (int y=0; y<grid.size(); y++){
-		new_row.clear();
-		for (int x=0; x<grid[0].size(); x++){
-			new_row.push_back(belief_per_cell);
-		}
-		newGrid.push_back(new_row);
-	}
+    	for (int x=0; x<grid[0].size(); x++){
+        	sum = sum+grid[y][x];
+        }
+    }
+	for (int y=0; y<grid.size(); y++){
+    	new_row.clear();
+    	for (int x=0; x<grid[0].size(); x++){
+        	new_row.push_back(grid[y][x]/sum);
+        }
+    	newGrid.push_back(new_row);
+    }
+  
 	return newGrid;
 }
 
 /**
-  TODO - implement this function 
-    
-    Implements robot motion by updating beliefs based on the 
-    intended dx and dy of the robot. 
+	TODO - implement this function.
 
-    For example, if a localized robot with the following beliefs
+    Blurs (and normalizes) a grid of probabilities by spreading 
+    probability from each cell over a 3x3 "window" of cells. This 
+    function assumes a cyclic world where probability "spills 
+    over" from the right edge to the left and bottom to top. 
 
-    0.00  0.00  0.00
+    EXAMPLE - After blurring (with blurring=0.12) a localized 
+    distribution like this:
+
+    0.00  0.00  0.00 
     0.00  1.00  0.00
     0.00  0.00  0.00 
 
-    and dx and dy are both 1 and blurring is 0 (noiseless motion),
-    than after calling this function the returned beliefs would be
+    would look like this:
+	
+	0.01  0.02	0.01
+	0.02  0.88	0.02
+	0.01  0.02  0.01
 
-    0.00  0.00  0.00
-    0.00  0.00  0.00
-    0.00  0.00  1.00 
+    @param grid - a two dimensional grid (vector of vectors of floats)
+		   where each entry represents the unnormalized probability 
+		   associated with that grid cell.
 
-  @param dy - the intended change in y position of the robot
+	@param blurring - a floating point number between 0.0 and 1.0 
+		   which represents how much probability from one cell 
+		   "spills over" to it's neighbors. If it's 0.0, then no
+		   blurring occurs. 
 
-  @param dx - the intended change in x position of the robot
-
-    @param beliefs - a two dimensional grid of floats representing
-         the robot's beliefs for each cell before sensing. For 
-         example, a robot which has almost certainly localized 
-         itself in a 2D world might have the following beliefs:
-
-         0.01 0.98
-         0.00 0.01
-
-    @param blurring - A number representing how noisy robot motion
-           is. If blurring = 0.0 then motion is noiseless.
-
-    @return - a normalized two dimensional grid of floats 
-         representing the updated beliefs for the robot. 
+    @return - a new normalized two dimensional grid where probability 
+    	   has been blurred.
 */
-vector< vector <float> > move(int dy, int dx, 
-  vector < vector <float> > beliefs,
-  float blurring) 
-{
+vector < vector <float> > blur(vector < vector < float> > grid, float blurring) {
+	vector < vector <float> > newGrid(grid.size(), vector <float> (grid[0].size(), 0.0));
+	int height =grid.size();
+	int width = grid[0].size();
+	float grid_val;
+	float mult;
 	int new_y;
 	int new_x;
-	int height = beliefs.size();
-	int width = beliefs[0].size();
-	vector < vector <float> > newGrid(height, vector <float> (width, 0.0));
+
+	float center_prob = 1.0-blurring;
+	float corner_prob = blurring / 12.0;
+	float adjacent_prob = blurring / 6.0;
+	vector < vector <float> > window = {{corner_prob,adjacent_prob,corner_prob},{adjacent_prob,center_prob,adjacent_prob},{corner_prob,adjacent_prob,corner_prob}};
 
 	for (int y=0; y<height; y++){
     	for (int x=0; x<width; x++){
-        	new_y = ((y + dy) % height + height) % height;
-        	new_x = ((x + dx) % width + width) % width;
-        	newGrid[int(new_y)][int(new_x)] = beliefs[y][x];
+        	grid_val = grid[y][x];
+        	for (int dx =-1;dx<2;dx++){
+            	for (int dy =-1;dy<2;dy++){
+                	mult = window[dx+1][dy+1];
+                	new_y = (((y + dy) % height) + height) % height;
+                	new_x = (((x + dx) % width) + width) % width;
+                	newGrid[new_y][new_x] += mult * grid_val;
+            	}
+        	}
     	}
 	}
-	return blur(newGrid, blurring);
+	return normalize(newGrid);
 }
+
+/** -----------------------------------------------
+#
+#
+#	You do not need to modify any code below here.
+#
+#
+# ------------------------------------------------- */
 
 
 /**
-	TODO - implement this function 
+    Determines when two grids of floating point numbers 
+    are "close enough" that they should be considered 
+    equal. Useful for battling "floating point errors".
+
+    @param g1 - a grid of floats
     
-    Implements robot sensing by updating beliefs based on the 
-    color of a sensor measurement 
+    @param g2 - a grid of floats
 
-	@param color - the color the robot has sensed at its location
-
-	@param grid - the current map of the world, stored as a grid
-		   (vector of vectors of chars) where each char represents a 
-		   color. For example:
-
-		   g g g
-    	   g r g
-    	   g g g
-
-   	@param beliefs - a two dimensional grid of floats representing
-   		   the robot's beliefs for each cell before sensing. For 
-   		   example, a robot which has almost certainly localized 
-   		   itself in a 2D world might have the following beliefs:
-
-   		   0.01 0.98
-   		   0.00 0.01
-
-    @param p_hit - the RELATIVE probability that any "sense" is 
-    	   correct. The ratio of p_hit / p_miss indicates how many
-    	   times MORE likely it is to have a correct "sense" than
-    	   an incorrect one.
-
-   	@param p_miss - the RELATIVE probability that any "sense" is 
-    	   incorrect. The ratio of p_hit / p_miss indicates how many
-    	   times MORE likely it is to have a correct "sense" than
-    	   an incorrect one.
-
-    @return - a normalized two dimensional grid of floats 
-    	   representing the updated beliefs for the robot. 
+    @return - A boolean (True or False) indicating whether
+    these grids are (True) or are not (False) equal.
 */
-vector< vector <float> > sense(char color, 
-	vector< vector <char> > grid, 
-	vector< vector <float> > beliefs, 
-	float p_hit,
-	float p_miss) 
-{
-	int height = grid.size();
-	int width = grid[0].size();
-	float sum =0;
-
-	vector< vector <float> > new_beliefs = beliefs;
-
-	for (int y=0; y<height; y++){
-    	for (int x=0; x<width; x++){
-        	if (grid[y][x] ==color){
-            	new_beliefs[y][x] = beliefs[y][x]*p_hit;
-        	}
-        	else{
-            	new_beliefs[y][x] = beliefs[y][x]*p_miss;
-        	}
-    	}
+bool close_enough(vector < vector <float> > g1, vector < vector <float> > g2) {
+	int i, j;
+	float v1, v2;
+	if (g1.size() != g2.size()) {
+		return false;
 	}
-	return normalize(new_beliefs);
+
+	if (g1[0].size() != g2[0].size()) {
+		return false;
+	}
+	for (i=0; i<g1.size(); i++) {
+		for (j=0; j<g1[0].size(); j++) {
+			v1 = g1[i][j];
+			v2 = g2[i][j];
+			if (abs(v2-v1) > 0.0001 ) {
+				return false;
+			}
+		}
+	}
+	return true;
 }
+
+bool close_enough(float v1, float v2) { 
+	if (abs(v2-v1) > 0.0001 ) {
+		return false;
+	} 
+	return true;
+}
+
+/**
+    Helper function for reading in map data
+
+    @param s - a string representing one line of map data.
+
+    @return - A row of chars, each of which represents the
+    color of a cell in a grid world.
+*/
+vector <char> read_line(string s) {
+	vector <char> row;
+
+	size_t pos = 0;
+	string token;
+	string delimiter = " ";
+	char cell;
+
+	while ((pos = s.find(delimiter)) != std::string::npos) {
+		token = s.substr(0, pos);
+		s.erase(0, pos + delimiter.length());
+
+		cell = token.at(0);
+		row.push_back(cell);
+	}
+
+	return row;
+}
+
+/**
+    Helper function for reading in map data
+
+    @param file_name - The filename where the map is stored.
+
+    @return - A grid of chars representing a map.
+*/
+vector < vector <char> > read_map(string file_name) {
+	ifstream infile(file_name);
+	vector < vector <char> > map;
+	if (infile.is_open()) {
+
+		char color;
+		vector <char> row;
+		
+		string line;
+
+		while (std::getline(infile, line)) {
+			row = read_line(line);
+			map.push_back(row);
+		}
+	}
+	return map;
+}
+
+/**
+    Creates a grid of zeros
+
+    For example:
+
+    zeros(2, 3) would return
+
+    0.0  0.0  0.0
+    0.0  0.0  0.0
+
+    @param height - the height of the desired grid
+
+    @param width - the width of the desired grid.
+
+    @return a grid of zeros (floats)
+*/
+vector < vector <float> > zeros(int height, int width) {
+	int i, j;
+	vector < vector <float> > newGrid;
+	vector <float> newRow;
+
+	for (i=0; i<height; i++) {
+		newRow.clear();
+		for (j=0; j<width; j++) {
+			newRow.push_back(0.0);
+		}
+		newGrid.push_back(newRow);
+	}
+	return newGrid;
+}
+
+// int main() {
+// 	vector < vector < char > > map = read_map("maps/m1.txt");
+// 	show_grid(map);
+// 	return 0;
+// }
