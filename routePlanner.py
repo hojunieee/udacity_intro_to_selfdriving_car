@@ -74,3 +74,21 @@ class PathPlanner():
         print("No Path Found")
         self.path = None
         return False
+
+    
+    def create_closedSet(self):
+    """ Creates and returns a data structure suitable to hold the set of nodes already evaluated"""
+    # EXAMPLE: return a data structure suitable to hold the set of nodes already evaluated
+    return set()
+
+def create_openSet(self):
+    """ Creates and returns a data structure suitable to hold the set of currently discovered nodes 
+    that are not evaluated yet. Initially, only the start node is known."""
+    if self.start != None:
+        # TODO: return a data structure suitable to hold the set of currently discovered nodes 
+        # that are not evaluated yet. Make sure to include the start node.
+        notEvalYet = set()
+        notEvalYet.add(self.start)
+        return notEvalYet
+    
+    raise(ValueError, "Must create start node before creating an open set. Try running PathPlanner.set_start(start_node)")
