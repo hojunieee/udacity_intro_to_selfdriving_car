@@ -76,19 +76,90 @@ class PathPlanner():
         return False
 
     
+    
+    
+    #Data Structures
+    
     def create_closedSet(self):
     """ Creates and returns a data structure suitable to hold the set of nodes already evaluated"""
-    # EXAMPLE: return a data structure suitable to hold the set of nodes already evaluated
-    return set()
+        return set()
 
     def create_openSet(self):
-        """ Creates and returns a data structure suitable to hold the set of currently discovered nodes 
-       that are not evaluated yet. Initially, only the start node is known."""
-       if self.start != None:
-            # TODO: return a data structure suitable to hold the set of currently discovered nodes 
-            # that are not evaluated yet. Make sure to include the start node.
+    """ Creates and returns a data structure suitable to hold the set of currently discovered nodes 
+    that are not evaluated yet. Initially, only the start node is known."""
+        if self.start != None:
+        # TODO: return a data structure suitable to hold the set of currently discovered nodes 
+        # that are not evaluated yet. Make sure to include the start node.
             notEvalYet = set()
             notEvalYet.add(self.start)
             return notEvalYet
-    
         raise(ValueError, "Must create start node before creating an open set. Try running PathPlanner.set_start(start_node)")
+        
+    def create_cameFrom(self):
+        # TODO: return a data structure that shows which node can most efficiently be reached from another, for each node. 
+        return dict()
+    
+    """
+    =================Todo================
+    
+    def create_gScore(self):
+        # TODO:  return a data structure that holds the cost of getting from the start node to that node, for each node.
+        # for each node. The cost of going from start to start is zero. The rest of the node's values should 
+        # be set to infinity.
+        return 0.0
+    
+    def create_fScore(self):
+        # TODO: return a data structure that holds the total cost of getting from the start node to the goal
+        # by passing by that node, for each node. That value is partly known, partly heuristic.
+        # For the first node, that value is completely heuristic. The rest of the node's value should be set to infinity.
+        return 0.0
+    """
+    
+    
+    #Set certain variables
+    
+    def set_map(self, M):
+        # TODO: Set map to new value. 
+        self._reset(self)
+        self.start = None
+        self.goal = None
+        self.map = M
+
+    def set_start(self, start):
+        # TODO: Set start value. Remember to remove goal, closedSet, openSet, cameFrom, gScore, fScore, and path attributes' values.
+        self._reset(self)
+        self.start = start
+        
+    def set_goal(self, goal):
+        # TODO: Set goal value
+        self._reset(self)
+        self.goal = goal
+    
+    
+    
+    
+    #Get node information
+    
+    def is_open_empty(self):
+        # TODO: Return True if the open set is empty. False otherwise.
+        return len(self)==0
+    
+    def get_current_node(self):
+        # TODO: Return the node in the open set with the lowest value of f(node).
+        #Got inspiration from https://github.com/wgcv/Intro-to-Self-Driving-Cars/blob/master/Project%205%20-%20Implement%20Route%20Planner/project_notebook.ipynb
+        current_min = self.calculate_fscore(self.openSet[0])
+        for node in self.openSet:
+            if self.calculate_fscore(node) < current_min:
+                current_node = node
+                current_min = self.calculate_fscore(node)
+        return current_node
+    
+    def get_neighbors(self, node):
+        # TODO: Return the neighbors of a node
+        return(self.map.roads[node])
+    
+    
+    
+    #Scores and Costs
+    
+    
