@@ -1,6 +1,3 @@
-# Do not change this cell
-# When you write your methods correctly this cell will execute
-# without problems
 class PathPlanner():
     """Construct a PathPlanner Object"""
     def __init__(self, M, start=None, goal=None):
@@ -99,21 +96,28 @@ class PathPlanner():
         # TODO: return a data structure that shows which node can most efficiently be reached from another, for each node. 
         return dict()
     
-    """
-    =================Todo================
     
     def create_gScore(self):
         # TODO:  return a data structure that holds the cost of getting from the start node to that node, for each node.
         # for each node. The cost of going from start to start is zero. The rest of the node's values should 
         # be set to infinity.
-        return 0.0
+        ddd=dict()
+        for i in self.map.intersections:
+            ddd[i]=float("inf")
+        ddd[self.start] = 0.0
+        return ddd
     
     def create_fScore(self):
         # TODO: return a data structure that holds the total cost of getting from the start node to the goal
         # by passing by that node, for each node. That value is partly known, partly heuristic.
         # For the first node, that value is completely heuristic. The rest of the node's value should be set to infinity.
-        return 0.0
-    """
+        ddd=dict()
+        for i in self.map.intersections:
+            ddd[i]=float("inf")
+        ddd[self.start] = 0.0
+        return ddd
+    
+    
     
     
     #Set certain variables
@@ -162,4 +166,33 @@ class PathPlanner():
     
     #Scores and Costs
     
+    def get_gScore(self, node):
+        # TODO: Return the g Score of a node
+        return self.gScore[node]
     
+    def distance(self, node_1, node_2):
+        # TODO: Compute and return the Euclidean L2 Distance
+        import math
+        x=self.map.intersections[node_1][0]-self.map.intersections[node_2][0]
+        y=self.map.intersections[node_1][1]-self.map.intersections[node_2][1]
+        return math.sqrt(x*x+y*y)
+    
+    def get_tentative_gScore(self, current, neighbor):
+        # TODO: Return the g Score of the current node plus distance from the current node to it's neighbors
+        return self.gScore[current] + self.distance(current,neighbor)
+    
+    def heuristic_cost_estimate(self, node):
+        # TODO: Return the heuristic cost estimate of a node
+        return self.distance(node,self.goal)
+    
+    def calculate_fscore(self, node):
+        # TODO: Calculate and returns the f score of a node. 
+        # REMEMBER F = G + H
+        self.fScore[node]=self.get_gScore(node)+self.heuristic_cost_estimate(node)
+        return self.fScore[node]
+
+    def record_best_path_to(self, current, neighbor):
+        # TODO: Record the best path to a node, by updating cameFrom, gScore, and fScore
+        self.cameFrom[neighbor] = current
+        self.gScore[neighbor] = self.get_tentative_gScore(current, neighbor)
+        self.calculate_fscore(neighbor)
