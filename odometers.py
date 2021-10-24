@@ -7,6 +7,8 @@ plt.xlabel("Time (in hours)")
 plt.ylabel("Odometer Reading (in miles)")
 plt.show()
 
+
+
 # SOLUTION - second (better) version
 def approximate_derivative(f, t):
     # 1. Set delta_t. Note that I've made it REALLY small.
@@ -23,3 +25,23 @@ def approximate_derivative(f, t):
 
 deriv_at_3_point_45 = approximate_derivative(position_b, 3.45)
 print("The derivative at t = 3.45 is", deriv_at_3_point_45)
+
+
+
+
+def integral(f, t1, t2, dt=0.1):
+    # area begins at 0.0 
+    area = 0.0
+    
+    # t starts at the lower bound of integration
+    t = t1
+    
+    # integration continues until we reach upper bound
+    while t < t2:
+        
+        # calculate the TINY bit of area associated with
+        # this particular rectangle and add to total
+        dA = f(t) * dt
+        area += dA
+        t += dt
+    return area
