@@ -1,87 +1,68 @@
+import numpy as np
+from math import pi
 from matplotlib import pyplot as plt
+
+# these 2 lines just hide some warning messages.
+import warnings
+warnings.filterwarnings('ignore')
 
 class Vehicle:
     def __init__(self):
-        """
-        Creates new vehicle at (0,0) with a heading pointed East.
-        """
-        self.x       = 0 # meters
-        self.y       = 0
-        self.heading = "E" # Can be "N", "S", "E", or "W"
+        self.x       = 0.0 # meters
+        self.y       = 0.0
+        self.heading = 0.0 # radians
         self.history = []
         
-    # TODO-1 - Implement this function 
     def drive_forward(self, displacement):
         """
         Updates x and y coordinates of vehicle based on 
         heading and appends previous (x,y) position to
         history.
         """
+        delta_x = displacement * np.cos(self.heading)
+        delta_y = displacement * np.sin(self.heading)
         
-        # this line appends the current (x,y) coordinates
-        # to the vehicle's history. Useful for plotting 
-        # the vehicle's trajectory. You shouldn't need to
-        # change this line.
+        new_x = self.x + delta_x
+        new_y = self.y + delta_y
+        
         self.history.append((self.x, self.y))
-        
-        # vehicle currently pointing east...
-        if   self.heading == "E":
-            self.x += displacement
-        
-        # north
-        elif self.heading == "N":
-            self.y += displacement
-        
-        # west
-        elif self.heading == "W":
-            self.x -= displacement
-        
-        # south
-        else:
-            self.y -= displacement
-        
-    def turn(self, direction):
-        if direction == "L":
-            self.turn_left()
-        elif direction == "R":
-            self.turn_right()
-        else:
-            print("Error. Direction must be 'L' or 'R'")
-            return
-        
-    def turn_left(self):
-        """
-        Updates heading (for a left turn) based on current heading
-        """
-        next_heading = {
-            "N" : "W",
-            "W" : "S",
-            "S" : "E",
-            "E" : "N",
-        }
-        self.heading = next_heading[self.heading]
-        
+
+        self.x = new_x
+        self.y = new_y
     
-    # TODO-2 - implement this function
-    def turn_right(self):
-        next_heading = {
-            "N" : "E",
-            "W" : "N",
-            "S" : "W",
-            "E" : "S",
-        }
-        self.heading = next_heading[self.heading]
+    def set_heading(self, heading_in_degrees):
+        """
+        Set's the current heading (in radians) to a new value
+        based on heading_in_degrees. Vehicle heading is always
+        between -pi and pi.
+        """
+        assert(-180 <= heading_in_degrees <= 180)
+        rads = (heading_in_degrees * pi / 180) % (2*pi)
+        self.heading = rads
+        
+    def turn(self, degrees):
+        rads = (degrees * pi / 180)
+        new_head = self.heading + rads % (2*pi)
+        self.heading = new_head
     
     def show_trajectory(self):
         """
         Creates a scatter plot of vehicle's trajectory.
         """
+        # get the x and y coordinates from vehicle's history
         X = [p[0] for p in self.history]
         Y = [p[1] for p in self.history]
         
+        # don't forget to add the CURRENT x and y
         X.append(self.x)
         Y.append(self.y)
         
+        # create scatter AND plot (to connect the dots)
         plt.scatter(X,Y)
         plt.plot(X,Y)
+        
+        plt.title("Vehicle (x, y) Trajectory")
+        plt.xlabel("X Position")
+        plt.ylabel("Y Position")
+        plt.axes().set_aspect('equal', 'datalim')
         plt.show()
