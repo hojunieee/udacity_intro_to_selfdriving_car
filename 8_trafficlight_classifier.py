@@ -105,23 +105,49 @@ ax4.imshow(v, cmap='gray')
 def create_feature(rgb_image): 
     ## TODO: Convert image to HSV color space
     hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-
-    ## TODO: Create and return a feature value and/or vector
-    feature = []
     v = hsv[:,:,2]
+    
+    #1. mask the image
+    masked_image = crop_hsv_image(rgb_image)
+    #2. crop the image
+    #3. do the histogram thing and label the feature
+    feature = []
+    return feature
 
-#optional
-def create_feature2(rgb_image):
-    r = rgb_image[:,:,0]
-    g = rgb_image[:,:,1]
-    b = rgb_image[:,:,2]
+    
+#=====================helper code=====================
+def crop_hsv_image(rgb_image):
+    #Convert rgb into hsv
+    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
+    
+    #get the value pixels
+    v = hsv[:,:,2]
+    
+    #Set the range for the value filter
+    lower_v = np.array([180]) 
+    upper_v = np.array([255])
 
-    # Visualize the individual color channels
-    f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20,10))
-    ax1.set_title('Red channel')
-    ax1.imshow(r)
-    ax2.set_title('Green channel')
-    ax2.imshow(g)
-    ax3.set_title('Blue channel')
-    ax3.imshow(b)
+    # Define the masked area
+    mask = cv2.inRange(v, lower_v, upper_v)
+
+    masked_image = np.copy(rgb_image)
+    masked_image[mask == 0] = [0]
+   
+    return masked_image
+    
+
+def crop_that_image(rgb_image):
+    # Make a copy of the image to manipulate
+    image_crop = np.copy(rgb_image)
+    
+    #Define boudaries 
+    cropL=cropR=cropU=cropD=0
+    
+    #Find the boundaries
+    #Todos!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    # Using image slicing, subtract the row_crop from top/bottom and col_crop from left/right
+    image_crop = stop2[cropU:cropD, cropL:cropR, :]
+    
+    return image_crop
     
