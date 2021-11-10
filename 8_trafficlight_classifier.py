@@ -277,16 +277,12 @@ def check_color(rgb_image):
     color=['yellow']
     height=len(rgb_image)
     width=len(rgb_image[0])
-    
-    
     # Make a copy of the image to manipulate
     image_crop = np.copy(rgb_image)
     #Convert rgb into hsv
     hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
     #Get the value pixels
     v = hsv[:,:,2]
-    
-    
     #Get average RGB values
     average_RGB = []
     lighted_pixel = []    
@@ -294,18 +290,15 @@ def check_color(rgb_image):
         for x in range(width):
             if v[y][x]!=0:
                 lighted_pixel.append(image_crop[y][x])
-                
     average_RGB = np.average(lighted_pixel, axis=0)
+    #Use average_RGB to identify the color of the light
+    if type(average_RGB)!=list:
+        return ['red']
     aveR=average_RGB[0]
     aveG=average_RGB[1]
     aveB=average_RGB[2]
-    
-    if type(average_RGB)!=list:
-        return ['red']
-    
     if aveR>200:
         color.append('red')
     if aveG>200:
         color.append('green')
-        
     return color
