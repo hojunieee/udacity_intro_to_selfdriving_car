@@ -106,41 +106,49 @@ ax4.imshow(v, cmap='gray')
 def create_feature(rgb_image): 
     #Define default feature to red to be safe
     feature="red"
-    
+    #1. mask the image and remove traffic light box
     # TODO: Convert image to HSV color space
     hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
     v = hsv[:,:,2]
-    
-    #1. mask the image and remove traffic light box
-    masked_image = remove_traffic_box(rgb_image)
+    masked_image = remove_traffic_box(rgb_image,v)
     #plt.imshow(masked_image)
     
     #2. crop the image
-    cropped=crop_that_image(masked_image)
-    plt.imshow(cropped)
+    # TODO: Convert image to HSV color space
+    masked_hsv = cv2.cvtColor(masked_image, cv2.COLOR_RGB2HSV)
+    masked_v = masked_hsv[:,:,2]
+    cropped=crop_that_image(masked_image,masked_v)
+    #plt.imshow(cropped)
+    
     #If the traffic light box was not detected, just return red light
     h, w, c = cropped.shape
     if h==0 or w==0:
         return feature
     
+    #3. Apply the filter
+    cropped_hsv = cv2.cvtColor(cropped, cv2.COLOR_RGB2HSV)
+    cropped_v = cropped_hsv[:,:,2]
+    #feature = check_location(cropped,cropped_v)
+    
+    #'''
     #3. Check both filters and label the feature
     if properly_cropped(cropped):
-        if check_location(cropped)in check_color(cropped):
-            feature = check_location(cropped)
+        if check_location(cropped,cropped_v)in check_color(cropped):
+            feature = check_location(cropped,cropped_v)
     else:
-        if check_location(cropped)in check_color(cropped):
-            feature = check_location(cropped)
+        if check_location(cropped,cropped_v)in check_color(cropped):
+            feature = check_location(cropped,cropped_v)
+    #'''        
     return feature
+
+#create_feature(STANDARDIZED_LIST[10][0])
 
     
 #=====================helper code=====================
-def remove_traffic_box(rgb_image):
+def remove_traffic_box(rgb_image,v):
     #Convert rgb into hsv
-    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-    #get the value pixels
-    v = hsv[:,:,2]
     #Set the range for the value filter
-    lower_v = np.array([160]) 
+    lower_v = np.array([200]) 
     upper_v = np.array([255])
     # Define the masked area
     mask = cv2.inRange(v, lower_v, upper_v)
@@ -149,47 +157,37 @@ def remove_traffic_box(rgb_image):
     return masked_image
     
 
-def crop_that_image(rgb_image):
+def crop_that_image(rgb_image,v_matrix):
     # Make a copy of the image to manipulate
     image_crop = np.copy(rgb_image)
-    #Convert rgb into hsv
-    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-    #get the value pixels
-    v = hsv[:,:,2]
     #Define boudaries 
-    LB=0
-    UB=0
-    RB=31
-    DB=31
-    
+    LB=UB=0
+    RB=DB=31
     #Find the left boundary
     for x in range(31):
-        if horizontal_cut(v,x):
+        if horizontal_cut(v_matrix,x):
             LB=x
             break
     #Find the right boundary
     for x in range(31,0,-1):
-        if horizontal_cut(v,x):
+        if horizontal_cut(v_matrix,x):
             RB=x
             break
     #Find upper boundary
     for y in range(31):
-        if vertical_cut(v,y):
+        if vertical_cut(v_matrix,y):
             UB=y
             break
     #Find down(lower) boundary
     for y in range(31,0,-1):
-        if vertical_cut(v,y):
+        if vertical_cut(v_matrix,y):
             DB=y
             break
-    
     if UB>=DB or LB>=RB:
         LB=UB=0
         RB=DB=0
-    
     # Using image slicing, subtract the row_crop from top/bottom and col_crop from left/right
     image_crop = rgb_image[UB:DB, LB:RB, :]
-    
     return image_crop
 
 
@@ -205,11 +203,10 @@ def horizontal_cut(matrix,X):
             maxstreak=max(maxstreak,streak)
             streak=0
             index=index+1
-    if maxstreak>15:
+    if maxstreak>13:
         return True
     else:
         return False
-    
     
 def vertical_cut(matrix,Y):
     maxstreak=0
@@ -223,7 +220,6 @@ def vertical_cut(matrix,Y):
             maxstreak=max(maxstreak,streak)
             streak=0
             index=index+1
-    
     if maxstreak>10:
         return True
     else:
@@ -235,6 +231,7 @@ def properly_cropped(rgb_image):
     width=len(rgb_image[0])
     area=height*width
     lighted_pixel_counter=0
+    
     #Check if the masked area is more than 50%
     for y in range(height):
         for x in range(width):
@@ -246,22 +243,16 @@ def properly_cropped(rgb_image):
         return True
     
     
-def check_location(rgb_image):
+def check_location(rgb_image,v_matrix):
     #Set the default color to red to be safe
     color="red"
     height=len(rgb_image)
     width=len(rgb_image[0])
     lighted_pixel_location=list()
-    # Make a copy of the image to manipulate
-    image_crop = np.copy(rgb_image)
-    #Convert rgb into hsv
-    hsv = cv2.cvtColor(rgb_image, cv2.COLOR_RGB2HSV)
-    #Get the value pixels
-    v = hsv[:,:,2]
     #Take an average of the y-location where it hasn't been masked
     for y in range(height):
         for x in range(width):
-            if v[y][x]!=0:
+            if v_matrix[y][x]!=0:
                 lighted_pixel_location.append(y)
     ave_lighted=np.average(lighted_pixel_location)
     #label it!
@@ -270,6 +261,7 @@ def check_location(rgb_image):
     elif ave_lighted > height/3:
         color="yellow"
     return color
+
 
 
 def check_color(rgb_image):
@@ -291,7 +283,7 @@ def check_color(rgb_image):
             if v[y][x]!=0:
                 lighted_pixel.append(image_crop[y][x])
     average_RGB = np.average(lighted_pixel, axis=0)
-    #Use average_RGB to identify the color of the light
+    
     if type(average_RGB)!=list:
         return ['red']
     aveR=average_RGB[0]
